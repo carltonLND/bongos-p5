@@ -1,19 +1,18 @@
 p5.disableFriendlyErrors = true;
 
-let capture;
-let detector;
+let cameraVideo;
+let handModel;
 let bongoSound;
-let bongoSoundReady = true;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
 
-  capture = createCapture(VIDEO);
-  capture.elt.onloadeddata = function () {
-    createDetector();
+  cameraVideo = createCapture(VIDEO);
+  cameraVideo.elt.onloadeddata = function () {
+    setupModel();
   };
 
-  capture.hide();
+  cameraVideo.hide();
 
   bongoSound = loadSound("./assets/temp-bongo.mp3");
   bongoSound.playMode("untildone");
@@ -22,11 +21,11 @@ function setup() {
 function draw() {
   background("gray");
 
-  if (detector === undefined) {
+  if (handModel === undefined) {
     return;
   }
 
-  detector.estimateHands(capture.elt).then(onHandsFound);
+  handModel.estimateHands(cameraVideo.elt).then(onHandsFound);
 }
 
 function onHandsFound(hands) {
@@ -51,8 +50,6 @@ function onHandsFound(hands) {
 
     fill("red");
     rect(x, y, 50, 50);
-
-    // bongoSound.play();
   }
 }
 
@@ -83,7 +80,7 @@ function getRightHand(hands) {
   return rightHand !== undefined ? rightHand : {};
 }
 
-function createDetector() {
+function setupModel() {
   // @ts-ignore
   const handPoseModel = handPoseDetection.SupportedModels.MediaPipeHands;
 
@@ -97,13 +94,13 @@ function createDetector() {
   handPoseDetection
     .createDetector(handPoseModel, detectorConfig)
     .then((_detector) => {
-      detector = _detector;
+      handModel = _detector;
     });
 }
 
 function getRelativePos({ x, y }) {
-  const factorX = width / capture.width;
-  const factorY = height / capture.height;
+  const factorX = width / cameraVideo.width;
+  const factorY = height / cameraVideo.height;
 
   return { x: x * factorX, y: y * factorY };
 }
