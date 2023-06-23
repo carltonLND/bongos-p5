@@ -2,6 +2,8 @@ p5.disableFriendlyErrors = true;
 
 let capture;
 let detector;
+let bongoSound;
+let bongoSoundReady = true;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -12,6 +14,9 @@ function setup() {
   };
 
   capture.hide();
+
+  bongoSound = loadSound("./assets/temp-bongo.mp3");
+  bongoSound.playMode("untildone");
 }
 
 function draw() {
@@ -35,17 +40,19 @@ function onHandsFound(hands) {
   rectMode(CENTER);
 
   if (Object.keys(leftHand).length > 0) {
-    const leftHandCenter = calculateHandCenter(leftHand);
-    const { x, y } = getRelativePos(leftHandCenter);
+    const { x, y } = calculateHandCenter(leftHand);
+
     fill("blue");
     rect(x, y, 50, 50);
   }
 
   if (Object.keys(rightHand).length > 0) {
-    const rightHandCenter = calculateHandCenter(rightHand);
-    const { x, y } = getRelativePos(rightHandCenter);
+    const { x, y } = calculateHandCenter(rightHand);
+
     fill("red");
     rect(x, y, 50, 50);
+
+    // bongoSound.play();
   }
 }
 
@@ -53,10 +60,11 @@ function calculateHandCenter(hand) {
   const middleFingerBase = hand.keypoints[9];
   const palmBase = hand.keypoints[0];
 
-  return {
+  const handCenter = {
     x: (middleFingerBase.x + palmBase.x) / 2,
     y: (middleFingerBase.y + palmBase.y) / 2,
   };
+  return getRelativePos(handCenter);
 }
 
 function getLeftHand(hands) {
