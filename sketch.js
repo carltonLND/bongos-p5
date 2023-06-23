@@ -4,13 +4,11 @@ let capture;
 let detector;
 
 function setup() {
-  const canvas = createCanvas(200, 200);
+  createCanvas(windowWidth, windowHeight);
 
   capture = createCapture(VIDEO);
   capture.elt.onloadeddata = function () {
     createDetector();
-    resizeCanvas(capture.width, capture.height);
-    centerCanvas(canvas);
   };
 
   capture.hide();
@@ -18,19 +16,12 @@ function setup() {
 
 function draw() {
   background(255);
-  image(capture, 0, 0, width, height);
 
   if (detector === undefined) {
     return;
   }
 
   detector.estimateHands(capture.elt).then(onHandsFound);
-}
-
-function centerCanvas(canvas) {
-  let canvasX = (windowWidth - width) / 2;
-  let canvasy = (windowHeight - height) / 2;
-  canvas.position(canvasX, canvasy);
 }
 
 function calculateHandCenter(hand) {
@@ -89,13 +80,22 @@ function onHandsFound(hands) {
 
   if (Object.keys(leftHand).length > 0) {
     const leftHandCenter = calculateHandCenter(leftHand);
+    const { x, y } = getRelativePos(leftHandCenter);
     fill("blue");
-    rect(leftHandCenter.x, leftHandCenter.y, 50, 50);
+    rect(x, y, 50, 50);
   }
 
   if (Object.keys(rightHand).length > 0) {
     const rightHandCenter = calculateHandCenter(rightHand);
+    const { x, y } = getRelativePos(rightHandCenter);
     fill("red");
-    rect(rightHandCenter.x, rightHandCenter.y, 50, 50);
+    rect(x, y, 50, 50);
   }
+}
+
+function getRelativePos({ x, y }) {
+  const factorX = width / capture.width;
+  const factorY = height / capture.height;
+
+  return { x: x * factorX, y: y * factorY };
 }
