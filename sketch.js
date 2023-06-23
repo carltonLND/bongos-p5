@@ -5,10 +5,12 @@ let handModel;
 let bongoSound;
 
 function setup() {
-  createCanvas(windowWidth, windowHeight);
+  let canvas = createCanvas(windowWidth, windowHeight);
 
   cameraVideo = createCapture(VIDEO);
   cameraVideo.elt.onloadeddata = function () {
+    resizeCanvas(cameraVideo.width, cameraVideo.height);
+    centerCanvas(canvas);
     setupModel();
   };
 
@@ -20,6 +22,8 @@ function setup() {
 
 function draw() {
   background("gray");
+
+  image(cameraVideo, 0, 0, width, height);
 
   if (handModel === undefined) {
     return;
@@ -103,4 +107,10 @@ function getRelativePos({ x, y }) {
   const factorY = height / cameraVideo.height;
 
   return { x: x * factorX, y: y * factorY };
+}
+
+function centerCanvas(canvas) {
+  const x = (windowWidth - width) / 2;
+  const y = (windowHeight - height) / 2;
+  canvas.position(x, y);
 }
