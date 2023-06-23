@@ -1,35 +1,51 @@
 p5.disableFriendlyErrors = true;
 
+const bongos = {};
+
 let cameraVideo;
 let handModel;
-let bongoSound;
 
 function setup() {
   let canvas = createCanvas(windowWidth, windowHeight);
 
-  cameraVideo = createCapture(VIDEO);
-  cameraVideo.elt.onloadeddata = function () {
+  cameraVideo = createCapture(VIDEO, () => {
     resizeCanvas(cameraVideo.width, cameraVideo.height);
     centerCanvas(canvas);
     setupModel();
-  };
+
+    bongos.left = getBongoObj(
+      width - width / 4,
+      height,
+      100,
+      100,
+      "./assets/temp-bongo.mp3"
+    );
+    bongos.right = getBongoObj(
+      width / 4,
+      height,
+      100,
+      100,
+      "./assets/temp-bongo2.mp3"
+    );
+  });
 
   cameraVideo.hide();
-
-  bongoSound = loadSound("./assets/temp-bongo.mp3");
-  bongoSound.playMode("untildone");
 }
 
-function draw() {
-  background("gray");
-
-  image(cameraVideo, 0, 0, width, height);
+// @ts-ignore
+async function draw() {
+  drawMirroredCapture(cameraVideo);
 
   if (handModel === undefined) {
     return;
   }
 
-  handModel.estimateHands(cameraVideo.elt).then(onHandsFound);
+  // @ts-ignore
+  Object.values(bongos).forEach((bongo) => {
+    drawBongo(bongo);
+  });
+
+  await handModel.estimateHands(cameraVideo.elt).then(onHandsFound);
 }
 
 function onHandsFound(hands) {
@@ -40,20 +56,24 @@ function onHandsFound(hands) {
   const leftHand = getLeftHand(hands);
   const rightHand = getRightHand(hands);
 
-  rectMode(CENTER);
-
   if (Object.keys(leftHand).length > 0) {
-    const { x, y } = calculateHandCenter(leftHand);
+    const hand = calculateHandCenter(leftHand);
 
-    fill("blue");
-    rect(x, y, 50, 50);
+    // debugHandBox(hand, "blue");
+
+    if (isTouchingBongo(hand, bongos.left)) {
+      bongos.left.sound.play();
+    }
   }
 
   if (Object.keys(rightHand).length > 0) {
-    const { x, y } = calculateHandCenter(rightHand);
+    const hand = calculateHandCenter(rightHand);
 
-    fill("red");
-    rect(x, y, 50, 50);
+    // debugHandBox(hand, "red");
+
+    if (isTouchingBongo(hand, bongos.right)) {
+      bongos.right.sound.play();
+    }
   }
 }
 
@@ -65,12 +85,13 @@ function calculateHandCenter(hand) {
     x: (middleFingerBase.x + palmBase.x) / 2,
     y: (middleFingerBase.y + palmBase.y) / 2,
   };
-  return getRelativePos(handCenter);
+
+  return getMirroredPos(handCenter);
 }
 
 function getLeftHand(hands) {
   const leftHand = hands.find((hand) => {
-    return hand.handedness === "Right";
+    return hand.handedness === "Left";
   });
 
   return leftHand !== undefined ? leftHand : {};
@@ -78,7 +99,7 @@ function getLeftHand(hands) {
 
 function getRightHand(hands) {
   const rightHand = hands.find((hand) => {
-    return hand.handedness === "Left";
+    return hand.handedness === "Right";
   });
 
   return rightHand !== undefined ? rightHand : {};
@@ -102,15 +123,71 @@ function setupModel() {
     });
 }
 
-function getRelativePos({ x, y }) {
-  const factorX = width / cameraVideo.width;
-  const factorY = height / cameraVideo.height;
-
-  return { x: x * factorX, y: y * factorY };
-}
-
 function centerCanvas(canvas) {
   const x = (windowWidth - width) / 2;
   const y = (windowHeight - height) / 2;
   canvas.position(x, y);
+}
+
+function drawBongo({ x, y, width, height }) {
+  push();
+  rectMode(CENTER);
+  fill("green");
+
+  rect(x, y, width, height);
+  pop();
+}
+
+function getBongoObj(x, y, width, height, soundPath) {
+  const sound = loadSound(soundPath);
+  sound.playMode("untildone");
+
+  const hitbox = {
+    top: y - height / 2,
+    bottom: y + height / 2,
+    left: x - width / 2,
+    right: x + width / 2,
+  };
+
+  return {
+    x,
+    y,
+    width,
+    height,
+    hitbox,
+    sound,
+  };
+}
+
+function isTouchingBongo(hand, bongo) {
+  if (hand.y < bongo.hitbox.top) {
+    return false;
+  }
+
+  if (hand.x < bongo.hitbox.left || hand.x > bongo.hitbox.right) {
+    return false;
+  }
+
+  return true;
+}
+
+function getMirroredPos({ x, y }) {
+  const centerDistance = width / 2 - x;
+  return { x: x + 2 * centerDistance, y };
+}
+
+function drawMirroredCapture(capture) {
+  push();
+  translate(width, 0);
+  scale(-1, 1);
+  image(capture, 0, 0, width, height);
+  pop();
+}
+
+function debugHandBox(hand, color) {
+  push();
+  rectMode(CENTER);
+  fill(color);
+  rect(hand.x, hand.y, 50, 50);
+  pop();
 }
