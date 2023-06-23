@@ -15,13 +15,38 @@ function setup() {
 }
 
 function draw() {
-  background(255);
+  background("gray");
 
   if (detector === undefined) {
     return;
   }
 
   detector.estimateHands(capture.elt).then(onHandsFound);
+}
+
+function onHandsFound(hands) {
+  if (!Array.isArray(hands) || hands.length === 0) {
+    return;
+  }
+
+  const leftHand = getLeftHand(hands);
+  const rightHand = getRightHand(hands);
+
+  rectMode(CENTER);
+
+  if (Object.keys(leftHand).length > 0) {
+    const leftHandCenter = calculateHandCenter(leftHand);
+    const { x, y } = getRelativePos(leftHandCenter);
+    fill("blue");
+    rect(x, y, 50, 50);
+  }
+
+  if (Object.keys(rightHand).length > 0) {
+    const rightHandCenter = calculateHandCenter(rightHand);
+    const { x, y } = getRelativePos(rightHandCenter);
+    fill("red");
+    rect(x, y, 50, 50);
+  }
 }
 
 function calculateHandCenter(hand) {
@@ -66,31 +91,6 @@ function createDetector() {
     .then((_detector) => {
       detector = _detector;
     });
-}
-
-function onHandsFound(hands) {
-  if (!Array.isArray(hands) || hands.length === 0) {
-    return;
-  }
-
-  const leftHand = getLeftHand(hands);
-  const rightHand = getRightHand(hands);
-
-  rectMode(CENTER);
-
-  if (Object.keys(leftHand).length > 0) {
-    const leftHandCenter = calculateHandCenter(leftHand);
-    const { x, y } = getRelativePos(leftHandCenter);
-    fill("blue");
-    rect(x, y, 50, 50);
-  }
-
-  if (Object.keys(rightHand).length > 0) {
-    const rightHandCenter = calculateHandCenter(rightHand);
-    const { x, y } = getRelativePos(rightHandCenter);
-    fill("red");
-    rect(x, y, 50, 50);
-  }
 }
 
 function getRelativePos({ x, y }) {
