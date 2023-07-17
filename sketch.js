@@ -18,14 +18,14 @@ function setup() {
       height,
       100,
       100,
-      "./assets/left_bongo.mp3"
+      "./assets/high_bongo.mp3"
     );
     bongos.right = getBongoObj(
       width / 4,
       height,
       100,
       100,
-      "./assets/high_bongo.mp3"
+      "./assets/low_bongo.mp3"
     );
   });
 
